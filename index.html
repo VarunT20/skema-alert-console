@@ -233,7 +233,8 @@
     <div class="admin-row">
       <div class="field">
         <label for="webhookUrl">Webhook URL</label>
-        <input type="text" id="webhookUrl">
+        <input type="text" id="webhookUrl" placeholder="https://webhooks.workato.com/webhooks/rest/.../your-trigger">
+        <div class="error-text" id="err-webhookUrl">Must be the full Workato webhook trigger URL, starting with https://</div>
       </div>
       <button class="secondary" id="saveWebhook" type="button">Save</button>
     </div>
@@ -325,12 +326,18 @@
 
   saveWebhookBtn.addEventListener('click', () => {
     const val = webhookUrlInput.value.trim();
-    if (val) {
-      currentWebhookUrl = val;
-      localStorage.setItem(STORAGE_KEY, val);
-      adminSaved.classList.add('show');
-      setTimeout(() => adminSaved.classList.remove('show'), 2500);
+    const errEl = document.getElementById('err-webhookUrl');
+    if (!val.startsWith('https://')) {
+      webhookUrlInput.classList.add('field-error');
+      errEl.classList.add('show');
+      return;
     }
+    webhookUrlInput.classList.remove('field-error');
+    errEl.classList.remove('show');
+    currentWebhookUrl = val;
+    localStorage.setItem(STORAGE_KEY, val);
+    adminSaved.classList.add('show');
+    setTimeout(() => adminSaved.classList.remove('show'), 2500);
   });
 
   // ---------- Alert form ----------
@@ -341,7 +348,7 @@
   const sendBtn = document.getElementById('sendBtn');
   const result = document.getElementById('result');
 
-  function newAlertId(){ return 'TM-DEMO-' + Date.now(); }
+  function newAlertId(){ return 'TM-' + Date.now().toString().slice(-8); }
   alertId.value = newAlertId();
 
   function clearFieldErrors(){
