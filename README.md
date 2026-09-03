@@ -1,4 +1,4 @@
-# SKeMa alert console — deploy guide
+# AML SKeMa alert console — deploy guide
 
 ## What's in this folder
 - `index.html` — the alert console (login gate, admin webhook config, free-form alert form)
