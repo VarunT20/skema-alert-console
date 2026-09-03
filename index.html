@@ -237,8 +237,8 @@
       </div>
       <button class="secondary" id="saveWebhook" type="button">Save</button>
     </div>
-    <div class="admin-saved" id="adminSaved">Saved for this session.</div>
-    <div class="hint" style="margin-top:10px;">This change applies only to your current browser session and resets if the page is reloaded.</div>
+    <div class="admin-saved" id="adminSaved">Saved.</div>
+    <div class="hint" style="margin-top:10px;">This is the Workato webhook that receives each alert. It's saved automatically in this browser and stays set across reloads.</div>
   </div>
 
   <div class="card">
@@ -275,10 +275,12 @@
 </div>
 
 <script>
-  const DEFAULT_WEBHOOK_URL = "/api/relay";
+  const RELAY_ENDPOINT = "/api/relay";
+  const DEFAULT_WORKATO_URL = "https://webhooks.workato.com/webhooks/rest/68572e93-427b-475e-a6b0-33e58300fb8f/aml_alert_intake";
+  const STORAGE_KEY = "skema_webhook_url";
   const CREDENTIALS = { user: "analyst", pass: "skema2026" };
 
-  let currentWebhookUrl = DEFAULT_WEBHOOK_URL;
+  let currentWebhookUrl = localStorage.getItem(STORAGE_KEY) || DEFAULT_WORKATO_URL;
 
   const loginScreen = document.getElementById('loginScreen');
   const consoleScreen = document.getElementById('consoleScreen');
@@ -325,6 +327,7 @@
     const val = webhookUrlInput.value.trim();
     if (val) {
       currentWebhookUrl = val;
+      localStorage.setItem(STORAGE_KEY, val);
       adminSaved.classList.add('show');
       setTimeout(() => adminSaved.classList.remove('show'), 2500);
     }
@@ -380,10 +383,10 @@
     showResult('pending', 'Sending alert…', JSON.stringify(payload, null, 2));
 
     try {
-      const res = await fetch(currentWebhookUrl, {
+      const res = await fetch(RELAY_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ targetUrl: currentWebhookUrl, payload: payload })
       });
       const text = await res.text();
       if (!res.ok) {

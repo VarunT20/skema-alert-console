@@ -1,7 +1,8 @@
-// Vercel serverless function — forwards the browser's request to Workato
-// server-to-server, so the browser never needs cross-origin access to Workato.
+// Vercel serverless function — forwards the browser's request to whichever
+// Workato webhook URL the console specifies, server-to-server, so the
+// browser never needs cross-origin access to Workato directly.
 
-const WORKATO_WEBHOOK_URL = "https://webhooks.workato.com/webhooks/rest/68572e93-427b-475e-a6b0-33e58300fb8f/aml_alert_intake";
+const DEFAULT_WORKATO_URL = "https://webhooks.workato.com/webhooks/rest/68572e93-427b-475e-a6b0-33e58300fb8f/aml_alert_intake";
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -18,15 +19,21 @@ module.exports = async (req, res) => {
     return;
   }
 
+  const body = req.body || {};
+  const targetUrl = (typeof body.targetUrl === 'string' && body.targetUrl.startsWith('https://'))
+    ? body.targetUrl
+    : DEFAULT_WORKATO_URL;
+  const payload = body.payload || {};
+
   try {
-    const workatoRes = await fetch(WORKATO_WEBHOOK_URL, {
+    const workatoRes = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.body)
+      body: JSON.stringify(payload)
     });
     const text = await workatoRes.text();
     res.status(workatoRes.status).send(text || '{"status":"sent"}');
   } catch (err) {
-    res.status(502).json({ error: 'Relay failed to reach Workato', detail: err.message });
+    res.status(502).json({ error: 'Relay failed to reach target webhook', detail: err.message });
   }
 };
